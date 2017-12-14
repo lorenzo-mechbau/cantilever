@@ -8,9 +8,10 @@ Building the example
 ====================
 
 Instructions on how to configure and build with CMake::
-  git clone https://github.com/OpenCMISS-Examples/cantilever.git
+
+  git clone https://github.com/OpenCMISS-Examples/${example_name}.git
   mkdir build
-  cmake -DOpenCMISSLibs_DIR=/path/to/opencmisslib/install ../cantilever
+  cmake -DOpenCMISSLibs_DIR=/path/to/opencmisslib/install ../${example_name}
   make  # cmake --build . will also work here and is much more platform agnostic.
 
 Running the example
