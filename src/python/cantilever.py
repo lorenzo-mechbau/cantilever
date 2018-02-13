@@ -242,6 +242,9 @@ problem.SolversCreateStart()
 problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,nonLinearSolver)
 nonLinearSolver.outputType = iron.SolverOutputTypes.PROGRESS
 nonLinearSolver.NewtonJacobianCalculationTypeSet(iron.JacobianCalculationTypes.FD)
+nonLinearSolver.NewtonAbsoluteToleranceSet(1e-14)
+nonLinearSolver.NewtonSolutionToleranceSet(1e-14)
+nonLinearSolver.NewtonRelativeToleranceSet(1e-14)
 nonLinearSolver.NewtonLinearSolverGet(linearSolver)
 linearSolver.linearType = iron.LinearSolverTypes.DIRECT
 #linearSolver.libraryType = iron.SolverLibraries.LAPACK
@@ -282,13 +285,10 @@ solverEquations.BoundaryConditionsCreateFinish()
 # Solve the problem
 problem.Solve()
 
-if not os.path.exists("./results"):
-    os.makedirs("./results")
-
 # Export results
 fields = iron.Fields()
 fields.CreateRegion(region)
-fields.NodesExport("./results/Cantilever","FORTRAN")
-fields.ElementsExport("./results/Cantilever","FORTRAN")
+fields.NodesExport("./Cantilever","FORTRAN")
+fields.ElementsExport("./Cantilever","FORTRAN")
 fields.Finalise()
 
