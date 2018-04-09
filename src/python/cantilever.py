@@ -12,7 +12,7 @@ height = 40.0
 density=9.0E-4 #in g mm^-3
 gravity=[0.0,0.0,-9.81] #in m s^-2
 
-UsePressureBasis = False
+usePressureBasis = False
 NumberOfGaussXi = 2
 
 coordinateSystemUserNumber = 1
@@ -74,7 +74,7 @@ if(NumberOfGaussXi>0):
     basis.quadratureNumberOfGaussXi = [NumberOfGaussXi]*numberOfXi
 basis.CreateFinish()
 
-if(UsePressureBasis):
+if(usePressureBasis):
     # Define pressure basis
     pressureBasis = iron.Basis()
     pressureBasis.CreateStart(pressureBasisUserNumber)
@@ -92,7 +92,7 @@ if(UsePressureBasis):
 generatedMesh = iron.GeneratedMesh()
 generatedMesh.CreateStart(generatedMeshUserNumber,region)
 generatedMesh.type = iron.GeneratedMeshTypes.REGULAR
-if(UsePressureBasis):
+if(usePressureBasis):
     generatedMesh.basis = [basis,pressureBasis]
 else:
     generatedMesh.basis = [basis]
@@ -156,7 +156,7 @@ equationsSet.DependentCreateStart(dependentFieldUserNumber,dependentField)
 dependentField.VariableLabelSet(iron.FieldVariableTypes.U,"Dependent")
 dependentField.ComponentInterpolationSet(iron.FieldVariableTypes.U,4,iron.FieldInterpolationTypes.ELEMENT_BASED)
 dependentField.ComponentInterpolationSet(iron.FieldVariableTypes.DELUDELN,4,iron.FieldInterpolationTypes.ELEMENT_BASED)
-if(UsePressureBasis):
+if(usePressureBasis):
     # Set the pressure to be nodally based and use the second mesh component
     if InterpolationType == 4:
         dependentField.ComponentInterpolationSet(iron.FieldVariableTypes.U,4,iron.FieldInterpolationTypes.NODE_BASED)
@@ -242,6 +242,9 @@ problem.SolversCreateStart()
 problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,nonLinearSolver)
 nonLinearSolver.outputType = iron.SolverOutputTypes.PROGRESS
 nonLinearSolver.NewtonJacobianCalculationTypeSet(iron.JacobianCalculationTypes.FD)
+nonLinearSolver.NewtonAbsoluteToleranceSet(1e-14)
+nonLinearSolver.NewtonSolutionToleranceSet(1e-14)
+nonLinearSolver.NewtonRelativeToleranceSet(1e-14)
 nonLinearSolver.NewtonLinearSolverGet(linearSolver)
 linearSolver.linearType = iron.LinearSolverTypes.DIRECT
 #linearSolver.libraryType = iron.SolverLibraries.LAPACK
