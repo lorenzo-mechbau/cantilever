@@ -49,6 +49,7 @@ PROGRAM CANTILEVEREXAMPLE
 
   !Program variables
   INTEGER(CMISSIntg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
+  INTEGER(CMISSIntg) :: NumberGlobalElements
   INTEGER(CMISSIntg) :: EquationsSetIndex
   INTEGER(CMISSIntg) :: NumberOfComputationalNodes,NumberOfDomains,ComputationalNodeNumber
   INTEGER(CMISSIntg) :: NodeNumber,NodeDomain,node_idx,component_idx,deriv_idx
@@ -56,6 +57,8 @@ PROGRAM CANTILEVEREXAMPLE
   INTEGER(CMISSIntg) :: LeftNormalXi
   INTEGER(CMISSIntg) :: NumberOfArguments,ArgumentLength,ArgStatus
   CHARACTER(LEN=255) :: CommandArgument
+
+  INTEGER(CMISSIntg) :: I
 
   !CMISS variables
   TYPE(cmfe_BasisType) :: DisplacementBasis,PressureBasis
@@ -98,6 +101,8 @@ PROGRAM CANTILEVEREXAMPLE
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
   CALL cmfe_OutputSetOn("Cantilever",Err)
 
+  CALL cmfe_RandomSeedsSet(9999,Err)
+
   !Read in arguments and overwrite default values
   !Usage: CantileverExample [Displacement Interpolation Type] [X elements] [Y elements] [Z elements] [Scaling Type]
   !Defaults:
@@ -105,6 +110,9 @@ PROGRAM CANTILEVEREXAMPLE
   NumberGlobalXElements=3
   NumberGlobalYElements=2
   NumberGlobalZElements=2
+
+  NumberGlobalElements=NumberGlobalXElements*NumberGlobalYElements*NumberGlobalZElements
+
   ScalingType=CMFE_FIELD_ARITHMETIC_MEAN_SCALING
 
   NumberOfArguments = COMMAND_ARGUMENT_COUNT()
@@ -171,6 +179,7 @@ PROGRAM CANTILEVEREXAMPLE
   !Create a 3D rectangular cartesian coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
   CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,3,Err)
   CALL cmfe_CoordinateSystem_CreateFinish(CoordinateSystem,Err)
 
   !Create a region and assign the coordinate system to the region
@@ -243,8 +252,24 @@ PROGRAM CANTILEVEREXAMPLE
   !Create a decomposition
   CALL cmfe_Decomposition_Initialise(Decomposition,Err)
   CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
-  CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
+  
+  !CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
+  CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_USER_DEFINED_TYPE,Err)
+
   CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfDomains,Err)
+
+  SELECT CASE(NumberOfDomains)
+  CASE(1)
+ 
+    DO I=1,NumberGlobalElements
+      CALL cmfe_Decomposition_ElementDomainSet(Decomposition,I,0,Err)
+    ENDDO      
+
+  CASE DEFAULT
+  CALL HANDLE_ERROR("Not ready for parallel run yet.")
+  
+  END SELECT
+
   CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 
   !Create a field to put the geometry (defualt is geometry)
@@ -253,10 +278,19 @@ PROGRAM CANTILEVEREXAMPLE
   CALL cmfe_Field_MeshDecompositionSet(GeometricField,Decomposition,Err)
   CALL cmfe_Field_VariableLabelSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,"Geometry",Err)
   CALL cmfe_Field_ScalingTypeSet(GeometricField,ScalingType,Err)
+
+  ! Set the domain to be used by the field components???
+  ! 1 vbl with 3 components with node-based interpolation (no need to specify)
+  CALL cmfe_Field_NumberOfComponentsSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,3,Err)
+  CALL cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,Err)
+  CALL cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,2,1,Err)
+  CALL cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,3,1,Err)
+
   CALL cmfe_Field_CreateFinish(GeometricField,Err)
 
   !Update the geometric field parameters
-  CALL cmfe_GeneratedMesh_GeometricParametersCalculate(GeneratedMesh,GeometricField,Err)
+  ! Comment cf. Laplace Benjamin 
+  ! CALL cmfe_GeneratedMesh_GeometricParametersCalculate(GeneratedMesh,GeometricField,Err)
 
   !Create a fibre field and attach it to the geometric field
   CALL cmfe_Field_Initialise(FibreField,Err)
@@ -269,7 +303,8 @@ PROGRAM CANTILEVEREXAMPLE
   CALL cmfe_Field_CreateFinish(FibreField,Err)
 
   !Create the equations_set
-  CALL cmfe_Field_Initialise(EquationsSetField,Err)
+  CALL cmfe_Field_Initialise(EquationsSetField,Err) !????
+
   CALL cmfe_EquationsSet_CreateStart(EquationSetUserNumber,Region,FibreField,[CMFE_EQUATIONS_SET_ELASTICITY_CLASS, &
     & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE,CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE],EquationsSetFieldUserNumber, &
     & EquationsSetField,EquationsSet,Err)
