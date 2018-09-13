@@ -303,8 +303,8 @@ PROGRAM CANTILEVEREXAMPLE
   CALL cmfe_Field_CreateFinish(FibreField,Err)
 
   !Create the equations_set
+  CALL cmfe_EquationsSet_Initialise(EquationsSet,Err)
   CALL cmfe_Field_Initialise(EquationsSetField,Err) !????
-
   CALL cmfe_EquationsSet_CreateStart(EquationSetUserNumber,Region,FibreField,[CMFE_EQUATIONS_SET_ELASTICITY_CLASS, &
     & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE,CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE],EquationsSetFieldUserNumber, &
     & EquationsSetField,EquationsSet,Err)
@@ -332,7 +332,12 @@ PROGRAM CANTILEVEREXAMPLE
       & CMFE_FIELD_NODE_BASED_INTERPOLATION,Err)
   ENDIF
   CALL cmfe_Field_ScalingTypeSet(DependentField,ScalingType,Err)
-  CALL cmfe_EquationsSet_DependentCreateFinish(EquationsSet,Err)
+
+  !Set the DOFs to be contiguous across components
+  CALL cmfe_Field_DOFOrderTypeSet(DependentField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER,Err)
+  CALL cmfe_Field_DOFOrderTypeSet(DependentField,CMFE_FIELD_DELUDELN_VARIABLE_TYPE,CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER,Err)
+
+  CALL cmfe_EquationsSet_DependentCreateFinish(EquationsSet,Err) ! Here is error!!!!
 
   !Create the material field
   CALL cmfe_Field_Initialise(MaterialField,Err)
